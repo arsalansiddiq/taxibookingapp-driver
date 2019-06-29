@@ -4,14 +4,14 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg_2"
-    android:name="com.codespare.afridiuser.Activities.WelcomeScreenActivity">
+    android:background="@color/background_color"
+    tools:context="com.taxibooking.driver.com.codespare.borakhdriver.Activity.WelcomeScreenActivity">
 
     <RelativeLayout
-        android:background="@color/background_color"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@+id/buttonLayout"
+        android:background="@drawable/splash_drawable"
         android:orientation="vertical"
         android:weightSum="1">
 
@@ -20,8 +20,6 @@
             android:id="@+id/view_pager"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
-
-
 
         <!-- Dots Layout-->
 
@@ -51,40 +49,39 @@
 
     </RelativeLayout>
 
-
     <LinearLayout
+        android:background="@color/background_color"
         android:id="@+id/buttonLayout"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/_150sdp"
-        android:layout_above="@+id/social_layout"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/_10sdp"
         android:layout_marginTop="@dimen/_10sdp"
-        android:orientation="vertical">
+        android:layout_above="@+id/social_layout"
+        android:orientation="horizontal">
 
-        <Button
+        <com.taxibooking.driver.Utilities.MyButton
             android:id="@+id/sign_in_btn"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="25dp"
-            android:layout_marginRight="25dp"
+            android:layout_height="match_parent"
+            android:layout_marginLeft="15dp"
+            android:layout_marginRight="15dp"
             android:layout_marginTop="1dp"
-            android:textSize="@dimen/_20sdp"
-            android:background="@drawable/white_button_drawable"
+            android:layout_weight="1"
+            android:background="@color/colorAccent"
             android:text="@string/sign_in"
-            android:textAllCaps="false"
-            android:textColor="@color/white" />
+            android:textColor="@color/text_color_white" />
 
-        <Button
+        <com.taxibooking.driver.Utilities.MyButton
             android:id="@+id/sign_up_btn"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="25dp"
-            android:layout_marginRight="25dp"
-            android:layout_marginTop="20dp"
-            android:background="@drawable/color_button_drawable"
-            android:text="@string/signup"
-            android:textSize="@dimen/_20sdp"
-            android:textAllCaps="false"
-            android:textColor="@color/bg_2" />
+            android:layout_height="match_parent"
+            android:layout_marginLeft="15dp"
+            android:layout_marginRight="15dp"
+            android:layout_marginTop="1dp"
+            android:layout_weight="1"
+            android:textColor="@color/text_color_white"
+            android:background="@color/colorPrimary"
+            android:text="@string/signup" />
 
 
     </LinearLayout>
@@ -97,28 +94,16 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <com.taxibooking.user.Utils.MyTextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:layout_marginTop="@dimen/_5sdp"
-            android:text="@string/or"
-            android:textColor="@color/white"
-            android:textSize="@dimen/_20sdp"
-            android:visibility="visible"
-            android:fontFamily="@font/quicksand_bold"/>
-
-        <com.taxibooking.user.Utils.MyTextView
+        <com.taxibooking.driver.Utilities.MyTextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/_10sdp"
             android:gravity="center"
             android:layout_marginTop="@dimen/_5sdp"
             android:text="@string/or_connect_with_social_media"
-            android:textColor="@color/white"
+            android:textColor="@color/wallet_holo_blue_light"
             android:textSize="@dimen/_14sdp"
-            android:visibility="visible"
-            android:fontFamily="@font/quicksand_bold" />
+            android:visibility="visible" />
 
     </LinearLayout>
 

@@ -8,6 +8,39 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:571699875382:android:67ac41ad085e9ba1",
+        "android_client_info": {
+          "package_name": "com.codespare.afrididriver"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "571699875382-emcbld0bho48j1lo3h6hdj8nkmhl2pfb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.codespare.afrididriver",
+            "certificate_hash": "20fe1167f3168c8b7d843c48272e36c8e28ea7e7"
+          }
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAqt7bnb1HuOPwTMs_vK_IFU0QrI6pVSdM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "571699875382-ijvofn0gd7u9jae30v0gefocniidhc1c.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:571699875382:android:5342c85b52117d00",
         "android_client_info": {
           "package_name": "com.codespare.afridiuser"

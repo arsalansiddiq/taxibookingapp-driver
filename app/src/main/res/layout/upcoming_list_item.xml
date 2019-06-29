@@ -56,37 +56,40 @@
                             android:layout_weight="1"
                             android:orientation="vertical">
 
-                            <com.taxibooking.user.Utils.MyBoldTextView
+                            <com.taxibooking.driver.Utilities.MyTextView
                                 android:id="@+id/tripDate"
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
-                                android:layout_weight="1"
                                 android:gravity="center|start"
-                                android:text="Dec 24,2016 at 08.00pm"
                                 android:textColor="@color/black_text_color"
-                                android:textSize="@dimen/_12sdp" />
+                                android:textSize="13sp" />
 
-                            <LinearLayout
+
+                            <RelativeLayout
+                                android:layout_width="wrap_content"
+                                android:layout_marginTop="@dimen/_3sdp"
+                                android:layout_height="wrap_content">
+
+                                <com.taxibooking.driver.Utilities.MyTextView
+                                    android:id="@+id/trip"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/booking_id_colon"
+                                    android:textSize="13sp" />
+
+                                <com.taxibooking.driver.Utilities.MyTextView
+                                    android:id="@+id/tripid"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_toEndOf="@+id/trip" />
+
+                            </RelativeLayout>
+
+                            <com.taxibooking.driver.Utilities.MyTextView
+                                android:id="@+id/car_name"
                                 android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="vertical">
-
-                                <com.taxibooking.user.Utils.MyTextView
-                                    android:id="@+id/booking_id"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="Booking ID : 123456789"
-                                    android:textSize="@dimen/_10sdp" />
-
-                                <com.taxibooking.user.Utils.MyTextView
-                                    android:id="@+id/car_name"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:gravity="end"
-                                    android:text="sedan"
-                                    android:textSize="@dimen/_10sdp" />
-                            </LinearLayout>
+                                android:layout_height="match_parent"
+                                android:gravity="center|start" />
 
                         </LinearLayout>
 
@@ -97,7 +100,7 @@
                             android:gravity="center"
                             android:orientation="vertical">
 
-                            <com.taxibooking.user.Utils.MyBoldTextView
+                            <com.taxibooking.driver.Utilities.MyTextView
                                 android:id="@+id/tripAmount"
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
@@ -105,15 +108,14 @@
                                 android:textColor="@color/black_text_color"
                                 android:textSize="14sp" />
 
-                            <com.taxibooking.user.Utils.MyButton
+                            <com.taxibooking.driver.Utilities.MyButton
                                 android:id="@+id/btnCancel"
                                 android:layout_width="wrap_content"
                                 android:layout_height="@dimen/_25sdp"
-                                android:padding="5dp"
-                                android:layout_marginTop="@dimen/_5sdp"
-                                android:textAllCaps="false"
                                 android:background="@drawable/cancel_button_bg"
+                                android:padding="5dp"
                                 android:text="@string/cancel_ride"
+                                android:textAllCaps="false"
                                 android:textColor="@color/cancel_ride_color"
                                 android:textSize="@dimen/_12sdp" />
                         </LinearLayout>
@@ -133,14 +135,14 @@
                 android:paddingEnd="8dp"
                 android:visibility="gone">
 
-                <com.taxibooking.user.Utils.MyTextView
+                <com.taxibooking.driver.Utilities.MyTextView
                     android:id="@+id/tripTime"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:textSize="16sp" />
 
-                <TextView
+                <com.taxibooking.driver.Utilities.MyTextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -148,6 +150,16 @@
                     android:textSize="16sp"
                     android:visibility="gone" />
             </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/_5sdp"
+                android:orientation="horizontal">
+
+
+            </LinearLayout>
+
         </LinearLayout>
 
 

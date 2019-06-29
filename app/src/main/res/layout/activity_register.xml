@@ -7,7 +7,7 @@
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -21,48 +21,46 @@
                 android:id="@+id/backArrow"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:autoMirrored="true"
-                android:src="@drawable/back_drawable" />
+                android:src="@drawable/back_icon" />
 
-            <com.taxibooking.user.Utils.MyBoldTextView
+            <com.taxibooking.driver.Utilities.MyTextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="@string/enter_details_register"
+                android:text="@string/enter_your_details"
                 android:textColor="@color/black_text_color"
-                android:textSize="@dimen/_14sdp" />
+                android:textSize="@dimen/_16sdp" />
 
-            <com.taxibooking.user.Utils.MyTextView
+            <com.taxibooking.driver.Utilities.MyTextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="18dp"
                 android:text="@string/email"
-                android:textColor="@android:color/black"
+                android:textColor="@color/black_text_color"
                 android:textSize="@dimen/_14sdp" />
 
             <android.support.design.widget.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-                <com.taxibooking.user.Utils.MyEditText
+                <com.taxibooking.driver.Utilities.MyEditText
                     android:id="@+id/email"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="start"
                     android:imeOptions="actionNext"
                     android:inputType="textEmailAddress"
                     android:maxLines="1"
-                    android:textAlignment="viewStart" />
+                    android:textAlignment="viewStart"
+                    android:textSize="@dimen/_14sdp" />
 
             </android.support.design.widget.TextInputLayout>
 
-            <com.taxibooking.user.Utils.MyTextView
+            <com.taxibooking.driver.Utilities.MyTextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:text="@string/name"
-
-                android:textColor="@android:color/black"
+                android:textColor="@color/black_text_color"
                 android:textSize="@dimen/_14sdp" />
 
             <LinearLayout
@@ -75,54 +73,56 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1">
 
-                    <com.taxibooking.user.Utils.MyEditText
+                    <com.taxibooking.driver.Utilities.MyEditText
                         android:id="@+id/first_name"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:gravity="start"
                         android:hint="@string/first_name"
                         android:imeOptions="actionNext"
                         android:inputType="textCapWords|textPersonName"
                         android:maxLines="1"
-                        android:textAlignment="viewStart" />
+                        android:textAlignment="viewStart"
+                        android:textSize="@dimen/_14sdp" />
 
                 </android.support.design.widget.TextInputLayout>
 
                 <android.support.design.widget.TextInputLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
+                    android:layout_marginLeft="10dp"
                     android:layout_weight="1">
 
-                    <com.taxibooking.user.Utils.MyEditText
+                    <com.taxibooking.driver.Utilities.MyEditText
                         android:id="@+id/last_name"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:gravity="start"
                         android:hint="@string/last_name"
                         android:imeOptions="actionNext"
-                        android:inputType="textCapWords|textPersonName"
+                        android:inputType="text|textCapSentences"
                         android:maxLines="1"
-                        android:textAlignment="viewStart" />
+                        android:textAlignment="viewStart"
+                        android:textSize="@dimen/_14sdp" />
 
                 </android.support.design.widget.TextInputLayout>
             </LinearLayout>
 
-            <com.taxibooking.user.Utils.MyTextView
+
+            <com.taxibooking.driver.Utilities.MyTextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:text="@string/phone_number"
-                android:textColor="@android:color/black"
+                android:textColor="@color/black_text_color"
                 android:textSize="@dimen/_14sdp"
                 android:visibility="gone" />
 
             <android.support.design.widget.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:visibility="gone">
+                android:visibility="gone"
+                tools:ignore="RtlHardcoded">
 
-                <EditText
+                <com.taxibooking.driver.Utilities.MyEditText
                     android:id="@+id/mobile_no"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -132,35 +132,56 @@
 
             </android.support.design.widget.TextInputLayout>
 
-            <com.taxibooking.user.Utils.MyTextView
+            <com.taxibooking.driver.Utilities.MyTextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:text="@string/password"
-                android:textColor="@android:color/black"
+                android:textColor="@color/black_text_color"
                 android:textSize="@dimen/_14sdp" />
 
             <android.support.design.widget.TextInputLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp">
 
-                <com.taxibooking.user.Utils.MyEditText
+                <com.taxibooking.driver.Utilities.MyEditText
                     android:id="@+id/password"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="start"
-                    android:imeOptions="actionNext"
+                    android:imeOptions="actionDone"
                     android:inputType="textPassword"
                     android:maxLines="1"
-                    android:textAlignment="viewStart" />
+                    android:textAlignment="viewStart"
+                    android:textSize="@dimen/_14sdp" />
 
             </android.support.design.widget.TextInputLayout>
+
+            <com.taxibooking.driver.Utilities.MyTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/choose_type"
+                android:textColor="@color/black_text_color"
+                android:textSize="@dimen/_14sdp"
+                android:visibility="gone" />
+
+            <Spinner
+                android:id="@+id/service_spinner"
+                style="@style/spinner_style"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/_10sdp"
+                android:layout_marginLeft="@dimen/_10sdp"
+                android:layout_marginRight="@dimen/_10sdp"
+                android:layout_marginTop="@dimen/_10sdp"
+                android:visibility="gone" />
 
         </LinearLayout>
     </ScrollView>
 
     <android.support.design.widget.FloatingActionButton
-        android:id="@+id/nextBtn"
+        android:id="@+id/nextIcon"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
