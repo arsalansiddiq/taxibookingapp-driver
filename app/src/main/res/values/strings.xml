@@ -48,11 +48,13 @@
 
     <string name="app_name">&appName;</string>
     <!--Google map-->
-    <string name="google_map_api" translatable="false">AIzaSyBmTWJoAzY9zqT_G75HL04Nl5y-9Lt00cs</string>
+    <string name="google_map_api" translatable="false">AIzaSyDT84TSfmxcfUd4ZsJP6tA528TT0EwNGLc</string>
+    <string name="google_map__webservice_api" translatable="false">AIzaSyASkSNo9uuG9DlUgJ0EsuVWCTKu_dfkRac</string>
+    <!--<string name="google_map_api" translatable="false">AIzaSyBmTWJoAzY9zqT_G75HL04Nl5y-9Lt00cs</string>-->
     <!-- Facebook ID and Account Kit ID  -->
-    <string name="facebook_app_id" translatable="false">2564744730233254</string>
-    <string name="fb_login_protocol_scheme">fb2564744730233254</string>
-    <string name="ACCOUNT_KIT_CLIENT_TOKEN" translatable="false">99dc396b37055ef74ab1c8f29003d88d</string>
+    <string name="facebook_app_id">2457468604312612</string>
+    <string name="fb_login_protocol_scheme">fb2457468604312612</string>
+    <string name="ACCOUNT_KIT_CLIENT_TOKEN" translatable="false">843718257812be6a5dee9a1ab83ef684</string>
 
     <!--navigation_drawer-->
     <string name="navigation_drawer_open">Open navigation drawer</string>

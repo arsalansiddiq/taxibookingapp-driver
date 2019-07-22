@@ -1250,7 +1250,7 @@ public class Map extends Fragment implements OnMapReadyCallback, LocationListene
         String output = "json";
 
         // Building the url to the web service
-        String url = "https://maps.googleapis.com/maps/api/directions/" + output + "?" + parameters + "&key=" + context.getResources().getString(R.string.google_map_api);
+        String url = "https://maps.googleapis.com/maps/api/directions/" + output + "?" + parameters + "&key=" + context.getResources().getString(R.string.google_map__webservice_api);
 
 
         return url;
