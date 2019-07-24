@@ -255,10 +255,10 @@ public class MainActivity extends AppCompatActivity {
                         drawer.closeDrawers();
                         navigateToShareScreen(URLHelper.APP_URL+getPackageName());
                         return true;
-                    case R.id.nav_language:
+                   /* case R.id.nav_language:
                         drawer.closeDrawer(Gravity.START);
                         language_alert_view(MainActivity.this);
-                        return true;
+                        return true;*/
                     case R.id.nav_logout:
                         drawer.closeDrawers();
                         showLogoutDialog();

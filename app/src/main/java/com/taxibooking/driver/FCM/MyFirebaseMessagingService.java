@@ -1,12 +1,15 @@
 package com.taxibooking.driver.FCM;
 /**
- *@Developer android
- *@Company android
+ * @Developer android
+ * @Company android
  **/
+
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
@@ -14,11 +17,11 @@ import android.provider.Settings;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 
-import com.taxibooking.driver.Activity.MainActivity;
-import com.taxibooking.driver.Utilities.Utilities;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
+import com.taxibooking.driver.Activity.MainActivity;
 import com.taxibooking.driver.R;
+import com.taxibooking.driver.Utilities.Utilities;
 
 public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
@@ -34,8 +37,8 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             utils.print(TAG, "Notification Message Body: " + remoteMessage.getData());
             //Calling method to generate notification
             sendNotification(remoteMessage.getData().get("message"));
-        }else{
-            utils.print(TAG,"FCM Notification failed");
+        } else {
+            utils.print(TAG, "FCM Notification failed");
         }
     }
 
@@ -45,15 +48,39 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
         if (!Utilities.isAppIsInBackground(getApplicationContext())) {
             // app is in foreground, broadcast the push message
-            utils.print(TAG,"foreground");
-                Intent intent = new Intent(this, MainActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                intent.putExtra("push", true);
-                PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent,
-                        PendingIntent.FLAG_ONE_SHOT);
+            utils.print(TAG, "foreground");
+            Intent intent = new Intent(this, MainActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            intent.putExtra("push", true);
+            PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent,
+                    PendingIntent.FLAG_ONE_SHOT);
+            NotificationCompat.Builder notificationBuilder;
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                int importance = NotificationManager.IMPORTANCE_HIGH;
+                String channelID = "457730";
+                NotificationChannel mChannel = new NotificationChannel(channelID, getResources().getString(R.string.app_name), importance);
+                mChannel.setDescription(messageBody);
+                mChannel.enableLights(true);
+                mChannel.setLightColor(Color.BLUE);
+                mChannel.enableVibration(true);
+                NotificationManager manager = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+
+                if (manager != null)
+                    manager.createNotificationChannel(mChannel);
 
 
-                NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
+                notificationBuilder = new NotificationCompat.Builder(this, channelID)
+                        .setContentTitle(getString(R.string.app_name))
+                        .setContentText(messageBody)
+                        .setAutoCancel(true)
+                        .setSound(Settings.System.DEFAULT_NOTIFICATION_URI)
+                        .setContentIntent(pendingIntent);
+                notificationBuilder.setSmallIcon(getNotificationIcon(notificationBuilder), 1);
+
+
+            } else {
+                notificationBuilder = new NotificationCompat.Builder(this)
                         .setContentTitle(getString(R.string.app_name))
                         .setContentText(messageBody)
                         .setAutoCancel(true)
@@ -62,54 +89,103 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
                 notificationBuilder.setSmallIcon(getNotificationIcon(notificationBuilder), 1);
 
+            }
+            NotificationManager notificationManager =
+                    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
-                NotificationManager notificationManager =
-                        (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-
-                notificationManager.notify(0, notificationBuilder.build());
+            notificationManager.notify(0, notificationBuilder.build());
 
 
-        }else{
-            utils.print(TAG,"background");
+        } else {
+            utils.print(TAG, "background");
             // app is in background, show the notification in notification tray
-            if(messageBody.equalsIgnoreCase("New Incoming Ride")){
+            if (messageBody.equalsIgnoreCase("New Incoming Ride")) {
                 Intent intent = new Intent(this, MainActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent,
                         PendingIntent.FLAG_ONE_SHOT);
 
-                Uri defaultSoundUri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-                NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
-                        .setContentTitle(getString(R.string.app_name))
-                        .setContentText(messageBody)
-                        .setAutoCancel(true)
-                        .setSound(Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.alert_tone))
-                        .setContentIntent(pendingIntent);
+                Uri defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+                NotificationCompat.Builder notificationBuilder;
 
-                notificationBuilder.setSmallIcon(getNotificationIcon(notificationBuilder), 1);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    int importance = NotificationManager.IMPORTANCE_HIGH;
+                    String channelID = "457731";
+                    NotificationChannel mChannel = new NotificationChannel(channelID, getResources().getString(R.string.app_name), importance);
+                    mChannel.setDescription(messageBody);
+                    mChannel.enableLights(true);
+                    mChannel.setLightColor(Color.BLUE);
+                    mChannel.enableVibration(true);
+                    NotificationManager manager = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+                    if (manager != null)
+                        manager.createNotificationChannel(mChannel);
 
+
+                    notificationBuilder = new NotificationCompat.Builder(this, channelID)
+                            .setContentTitle(getString(R.string.app_name))
+                            .setContentText(messageBody)
+                            .setAutoCancel(true)
+                            .setSound(Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.alert_tone))
+                            .setContentIntent(pendingIntent);
+
+                    notificationBuilder.setSmallIcon(getNotificationIcon(notificationBuilder), 1);
+
+
+                } else {
+                    notificationBuilder = new NotificationCompat.Builder(this)
+                            .setContentTitle(getString(R.string.app_name))
+                            .setContentText(messageBody)
+                            .setAutoCancel(true)
+                            .setSound(Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.alert_tone))
+                            .setContentIntent(pendingIntent);
+
+                    notificationBuilder.setSmallIcon(getNotificationIcon(notificationBuilder), 1);
+                }
 
                 NotificationManager notificationManager =
                         (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
                 notificationManager.notify(0, notificationBuilder.build());
-            }else{
+            } else {
                 Intent intent = new Intent(this, MainActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 intent.putExtra("push", true);
                 PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent,
                         PendingIntent.FLAG_ONE_SHOT);
+                NotificationCompat.Builder notificationBuilder;
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    int importance = NotificationManager.IMPORTANCE_HIGH;
+                    String channelID = "457732";
+                    NotificationChannel mChannel = new NotificationChannel(channelID, getResources().getString(R.string.app_name), importance);
+                    mChannel.setDescription(messageBody);
+                    mChannel.enableLights(true);
+                    mChannel.setLightColor(Color.BLUE);
+                    mChannel.enableVibration(true);
+                    NotificationManager manager = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+                    if (manager != null)
+                        manager.createNotificationChannel(mChannel);
 
 
-                NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
-                        .setContentTitle(getString(R.string.app_name))
-                        .setContentText(messageBody)
-                        .setAutoCancel(true)
-                        .setSound(Settings.System.DEFAULT_NOTIFICATION_URI)
-                        .setContentIntent(pendingIntent);
+                    notificationBuilder = new NotificationCompat.Builder(this, channelID)
+                            .setContentTitle(getString(R.string.app_name))
+                            .setContentText(messageBody)
+                            .setAutoCancel(true)
+                            .setSound(Settings.System.DEFAULT_NOTIFICATION_URI)
+                            .setContentIntent(pendingIntent);
 
-                notificationBuilder.setSmallIcon(getNotificationIcon(notificationBuilder), 1);
+                    notificationBuilder.setSmallIcon(getNotificationIcon(notificationBuilder), 1);
 
+                } else {
+                    notificationBuilder = new NotificationCompat.Builder(this)
+                            .setContentTitle(getString(R.string.app_name))
+                            .setContentText(messageBody)
+                            .setAutoCancel(true)
+                            .setSound(Settings.System.DEFAULT_NOTIFICATION_URI)
+                            .setContentIntent(pendingIntent);
+
+                    notificationBuilder.setSmallIcon(getNotificationIcon(notificationBuilder), 1);
+                }
 
                 NotificationManager notificationManager =
                         (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -122,10 +198,10 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
     }
 
     private int getNotificationIcon(NotificationCompat.Builder notificationBuilder) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
-            notificationBuilder.setColor(ContextCompat.getColor(getApplicationContext(),R.color.colorPrimary));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            notificationBuilder.setColor(ContextCompat.getColor(getApplicationContext(), R.color.colorPrimary));
             return R.drawable.notification_white;
-        }else {
+        } else {
             return R.mipmap.ic_launcher;
         }
     }
