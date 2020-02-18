@@ -8,6 +8,7 @@ package com.taxibooking.driver.Helper;
 public class URLHelper {
 
     public static final String base = "https://righttransport.pk/";
+     public static final String baseForImage = "https://righttransport.pk/storage/app/public/";
     public static final String HELP_URL = base+"";
     public static final String CALL_PHONE = "1";
     public static final String APP_URL = "https://play.google.com/store/apps/details?id=";

@@ -23,7 +23,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.taxibooking.driver.BorakhApplication;
+import com.taxibooking.driver.RightTransportDriverApplication;
 import com.android.volley.AuthFailureError;
 import com.android.volley.NetworkError;
 import com.android.volley.NetworkResponse;
@@ -33,7 +33,7 @@ import com.android.volley.Response;
 import com.android.volley.TimeoutError;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.taxibooking.driver.Activity.WelcomeScreenActivity;
+import com.taxibooking.driver.activity.WelcomeScreenActivity;
 import com.taxibooking.driver.Helper.CustomDialog;
 import com.taxibooking.driver.Helper.SharedHelper;
 import com.taxibooking.driver.Helper.URLHelper;
@@ -43,7 +43,7 @@ import org.json.JSONObject;
 
 import java.util.HashMap;
 
-import static com.taxibooking.driver.BorakhApplication.trimMessage;
+import static com.taxibooking.driver.RightTransportDriverApplication.trimMessage;
 
 public class Help extends Fragment implements View.OnClickListener {
 
@@ -253,7 +253,7 @@ public class Help extends Fragment implements View.OnClickListener {
                 return headers;
             }
         };
-        BorakhApplication.getInstance().addToRequestQueue(jsonObjectRequest);
+        RightTransportDriverApplication.getInstance().addToRequestQueue(jsonObjectRequest);
     }
 
     public void displayMessage(String toastString) {

@@ -29,19 +29,19 @@ import com.android.volley.Response;
 import com.android.volley.TimeoutError;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.taxibooking.driver.Activity.WelcomeScreenActivity;
+import com.taxibooking.driver.activity.WelcomeScreenActivity;
 import com.daasuu.cat.CountAnimationTextView;
 import com.taxibooking.driver.Helper.CustomDialog;
 import com.taxibooking.driver.Helper.SharedHelper;
 import com.taxibooking.driver.Helper.URLHelper;
-import com.taxibooking.driver.BorakhApplication;
+import com.taxibooking.driver.RightTransportDriverApplication;
 import com.taxibooking.driver.R;
 
 import org.json.JSONObject;
 
 import java.util.HashMap;
 
-import static com.taxibooking.driver.BorakhApplication.trimMessage;
+import static com.taxibooking.driver.RightTransportDriverApplication.trimMessage;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -285,7 +285,7 @@ public class SummaryFragment extends Fragment implements View.OnClickListener {
                 }
             };
 
-            BorakhApplication.getInstance().addToRequestQueue(jsonObjectRequest);
+            RightTransportDriverApplication.getInstance().addToRequestQueue(jsonObjectRequest);
         }
     }
 

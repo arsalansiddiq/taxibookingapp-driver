@@ -34,5 +34,18 @@ public class SharedHelper {
 
     }
 
+    public static void putKey(Context context, String Key, float Value) {
+        sharedPreferences = context.getSharedPreferences("Cache", Context.MODE_PRIVATE);
+        editor = sharedPreferences.edit();
+        editor.putFloat(Key, Value);
+        editor.commit();
+    }
+
+    public static float getKeyFloat(Context contextGetKey, String Key) {
+        sharedPreferences = contextGetKey.getSharedPreferences("Cache", Context.MODE_PRIVATE);
+        return sharedPreferences.getFloat(Key, 0);
+    }
+
+
 
 }

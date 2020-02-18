@@ -4,24 +4,36 @@ package com.taxibooking.driver.FCM;
  * @Company android
  **/
 
+import android.annotation.SuppressLint;
+import android.app.ActivityManager;
+import android.app.KeyguardManager;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
+import android.graphics.PixelFormat;
+import android.media.AudioAttributes;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
-import android.provider.Settings;
+import android.os.PowerManager;
+import android.support.annotation.NonNull;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
+import android.view.Window;
+import android.view.WindowManager;
 
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
-import com.taxibooking.driver.Activity.MainActivity;
 import com.taxibooking.driver.R;
 import com.taxibooking.driver.Utilities.Utilities;
+import com.taxibooking.driver.activity.MainActivity;
+
+import org.greenrobot.eventbus.EventBus;
+
+import java.util.List;
+import java.util.Map;
 
 public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
@@ -30,167 +42,200 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
     Utilities utils = new Utilities();
 
     @Override
-    public void onMessageReceived(RemoteMessage remoteMessage) {
+    public void onMessageReceived(@NonNull RemoteMessage remoteMessage) {
 
-        if (remoteMessage.getData() != null) {
-            utils.print(TAG, "From: " + remoteMessage.getFrom());
-            utils.print(TAG, "Notification Message Body: " + remoteMessage.getData());
-            //Calling method to generate notification
-            sendNotification(remoteMessage.getData().get("message"));
-        } else {
-            utils.print(TAG, "FCM Notification failed");
+        utils.print(TAG, "From: " + remoteMessage.getFrom());
+        utils.print(TAG, "Notification Message Body: " + remoteMessage.getData());
+        //Calling method to generate notification
+
+        KeyguardManager km = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
+        final KeyguardManager.KeyguardLock kl = km .newKeyguardLock("MyKeyguardLock");
+        kl.disableKeyguard();
+
+        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        @SuppressLint("InvalidWakeLockTag") PowerManager.WakeLock wakeLock = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK
+                | PowerManager.ACQUIRE_CAUSES_WAKEUP
+                | PowerManager.ON_AFTER_RELEASE, "MyWakeLock");
+        wakeLock.acquire();
+
+
+
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
+
+//        Map<String, String> dataMap = remoteMessage.getData();
+//        String title = remoteMessage.getNotification().getTitle();
+//        String body = remoteMessage.getNotification().getBody();
+//        utils.print(TAG, "Notification Message Body: " + title);
+//
+//        for (Map.Entry<String, String> entry : dataMap.entrySet()) {
+//            System.out.println(entry.getKey() + " = " + entry.getValue());
+//        }
+//
+//        sendNotification(body, title);
+
+    }
+
+    /**
+     * Author: Arsalan Siddiq
+     * Date: 06/02/2020
+     * Check is Application in Foreground
+     * This method will return true if an application is in foreground
+     */
+    private boolean isApplicationForeground(Context context, String appPackageName) {
+
+        ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        List<ActivityManager.RunningAppProcessInfo> appProcessInfoList = activityManager.getRunningAppProcesses();
+        if (appProcessInfoList == null) {
+            return false;
         }
+
+        final String packageName = appPackageName;
+
+        for (ActivityManager.RunningAppProcessInfo appProcessInfo : appProcessInfoList) {
+            if (appProcessInfo.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND &&
+                    appProcessInfo.processName.equals(packageName)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     //This method is only generating push notification
     //It is same as we did in earlier posts
-    private void sendNotification(String messageBody) {
+    private void sendNotification(String messageBody, String tittle) {
 
         if (!Utilities.isAppIsInBackground(getApplicationContext())) {
-            // app is in foreground, broadcast the push message
-            utils.print(TAG, "foreground");
-            Intent intent = new Intent(this, MainActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            intent.putExtra("push", true);
-            PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent,
-                    PendingIntent.FLAG_ONE_SHOT);
-            NotificationCompat.Builder notificationBuilder;
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                int importance = NotificationManager.IMPORTANCE_HIGH;
-                String channelID = "457730";
-                NotificationChannel mChannel = new NotificationChannel(channelID, getResources().getString(R.string.app_name), importance);
-                mChannel.setDescription(messageBody);
-                mChannel.enableLights(true);
-                mChannel.setLightColor(Color.BLUE);
-                mChannel.enableVibration(true);
-                NotificationManager manager = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
-
-                if (manager != null)
-                    manager.createNotificationChannel(mChannel);
 
 
-                notificationBuilder = new NotificationCompat.Builder(this, channelID)
-                        .setContentTitle(getString(R.string.app_name))
-                        .setContentText(messageBody)
-                        .setAutoCancel(true)
-                        .setSound(Settings.System.DEFAULT_NOTIFICATION_URI)
-                        .setContentIntent(pendingIntent);
-                notificationBuilder.setSmallIcon(getNotificationIcon(notificationBuilder), 1);
-
-
+            if (tittle.equalsIgnoreCase("Address Updated")) {
+                EventBus.getDefault().post(new Utilities.MessageEvent());
             } else {
-                notificationBuilder = new NotificationCompat.Builder(this)
+                // app is in foreground, broadcast the push message
+                utils.print(TAG, "foreground");
+                Intent intent = new Intent(this, MainActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                intent.putExtra("push", true);
+                PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent,
+                        PendingIntent.FLAG_ONE_SHOT);
+
+
+                NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
                         .setContentTitle(getString(R.string.app_name))
                         .setContentText(messageBody)
                         .setAutoCancel(true)
-                        .setSound(Settings.System.DEFAULT_NOTIFICATION_URI)
+                        .setSound(Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.alert_tone))
                         .setContentIntent(pendingIntent);
 
                 notificationBuilder.setSmallIcon(getNotificationIcon(notificationBuilder), 1);
+
+                NotificationManager notificationManager =
+                        (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+
+                    AudioAttributes att = new AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                            .build();
+
+                    int importance = NotificationManager.IMPORTANCE_HIGH;
+                    NotificationChannel notificationChannel = new NotificationChannel("123456789", "NOTIFICATION_CHANNEL_NAME_TAXI", importance);
+                    notificationBuilder.setChannelId("123456789");
+                    Uri sound = Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.alert_tone);
+                    notificationChannel.setSound(sound, att);
+                    notificationManager.createNotificationChannel(notificationChannel);
+                }
+
+
+
+                notificationManager.notify(123456789, notificationBuilder.build());
 
             }
-            NotificationManager notificationManager =
-                    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-
-            notificationManager.notify(0, notificationBuilder.build());
 
 
         } else {
             utils.print(TAG, "background");
             // app is in background, show the notification in notification tray
-            if (messageBody.equalsIgnoreCase("New Incoming Ride")) {
+            if (tittle.equalsIgnoreCase("New Booking Request")) {
                 Intent intent = new Intent(this, MainActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent,
                         PendingIntent.FLAG_ONE_SHOT);
 
                 Uri defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-                NotificationCompat.Builder notificationBuilder;
+                NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
+                        .setContentTitle(getString(R.string.app_name))
+                        .setContentText(messageBody)
+                        .setAutoCancel(true)
+                        .setSound(Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.alert_tone))
+                        .setContentIntent(pendingIntent);
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    int importance = NotificationManager.IMPORTANCE_HIGH;
-                    String channelID = "457731";
-                    NotificationChannel mChannel = new NotificationChannel(channelID, getResources().getString(R.string.app_name), importance);
-                    mChannel.setDescription(messageBody);
-                    mChannel.enableLights(true);
-                    mChannel.setLightColor(Color.BLUE);
-                    mChannel.enableVibration(true);
-                    NotificationManager manager = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
-                    if (manager != null)
-                        manager.createNotificationChannel(mChannel);
+                //.setSound(Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.alert_tone))
+                notificationBuilder.setSmallIcon(getNotificationIcon(notificationBuilder), 1);
 
-
-                    notificationBuilder = new NotificationCompat.Builder(this, channelID)
-                            .setContentTitle(getString(R.string.app_name))
-                            .setContentText(messageBody)
-                            .setAutoCancel(true)
-                            .setSound(Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.alert_tone))
-                            .setContentIntent(pendingIntent);
-
-                    notificationBuilder.setSmallIcon(getNotificationIcon(notificationBuilder), 1);
-
-
-                } else {
-                    notificationBuilder = new NotificationCompat.Builder(this)
-                            .setContentTitle(getString(R.string.app_name))
-                            .setContentText(messageBody)
-                            .setAutoCancel(true)
-                            .setSound(Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.alert_tone))
-                            .setContentIntent(pendingIntent);
-
-                    notificationBuilder.setSmallIcon(getNotificationIcon(notificationBuilder), 1);
-                }
 
                 NotificationManager notificationManager =
                         (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
-                notificationManager.notify(0, notificationBuilder.build());
+
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+
+                    AudioAttributes att = new AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                            .build();
+
+                    int importance = NotificationManager.IMPORTANCE_HIGH;
+                    NotificationChannel notificationChannel = new NotificationChannel("123456789", "NOTIFICATION_CHANNEL_NAME_TAXI", importance);
+                    notificationBuilder.setChannelId("123456789");
+                    Uri sound = Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.alert_tone);
+                    notificationChannel.setSound(sound, att);
+                    notificationManager.createNotificationChannel(notificationChannel);
+                }
+
+
+                notificationManager.notify(123456789, notificationBuilder.build());
             } else {
                 Intent intent = new Intent(this, MainActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 intent.putExtra("push", true);
                 PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent,
                         PendingIntent.FLAG_ONE_SHOT);
-                NotificationCompat.Builder notificationBuilder;
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    int importance = NotificationManager.IMPORTANCE_HIGH;
-                    String channelID = "457732";
-                    NotificationChannel mChannel = new NotificationChannel(channelID, getResources().getString(R.string.app_name), importance);
-                    mChannel.setDescription(messageBody);
-                    mChannel.enableLights(true);
-                    mChannel.setLightColor(Color.BLUE);
-                    mChannel.enableVibration(true);
-                    NotificationManager manager = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
-                    if (manager != null)
-                        manager.createNotificationChannel(mChannel);
 
 
-                    notificationBuilder = new NotificationCompat.Builder(this, channelID)
-                            .setContentTitle(getString(R.string.app_name))
-                            .setContentText(messageBody)
-                            .setAutoCancel(true)
-                            .setSound(Settings.System.DEFAULT_NOTIFICATION_URI)
-                            .setContentIntent(pendingIntent);
+                NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
+                        .setContentTitle(getString(R.string.app_name))
+                        .setContentText(messageBody)
+                        .setAutoCancel(true)
+                        .setSound(Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.alert_tone))
+                        .setContentIntent(pendingIntent);
 
-                    notificationBuilder.setSmallIcon(getNotificationIcon(notificationBuilder), 1);
+                notificationBuilder.setSmallIcon(getNotificationIcon(notificationBuilder), 1);
 
-                } else {
-                    notificationBuilder = new NotificationCompat.Builder(this)
-                            .setContentTitle(getString(R.string.app_name))
-                            .setContentText(messageBody)
-                            .setAutoCancel(true)
-                            .setSound(Settings.System.DEFAULT_NOTIFICATION_URI)
-                            .setContentIntent(pendingIntent);
-
-                    notificationBuilder.setSmallIcon(getNotificationIcon(notificationBuilder), 1);
-                }
 
                 NotificationManager notificationManager =
                         (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
-                notificationManager.notify(0, notificationBuilder.build());
+
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+
+                    AudioAttributes att = new AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                            .build();
+
+                    int importance = NotificationManager.IMPORTANCE_HIGH;
+                    NotificationChannel notificationChannel = new NotificationChannel("123456789", "NOTIFICATION_CHANNEL_NAME_TAXI", importance);
+                    notificationBuilder.setChannelId("123456789");
+                    Uri sound = Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.alert_tone);
+                    notificationChannel.setSound(sound, att);
+                    notificationManager.createNotificationChannel(notificationChannel);
+                }
+
+
+                notificationManager.notify(123456789, notificationBuilder.build());
             }
         }
 

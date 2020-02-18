@@ -82,7 +82,7 @@
             android:layout_margin="@dimen/_8sdp"
             android:orientation="horizontal"
             android:paddingStart="16dp"
-            android:visibility="visible">
+            android:visibility="gone">
 
 
             <ImageView
@@ -113,6 +113,7 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
+            android:visibility="gone"
             android:layout_marginBottom="5dp"
             android:background="@color/cardview_shadow_start_color">
 

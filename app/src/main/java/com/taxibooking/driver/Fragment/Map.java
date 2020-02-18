@@ -10,10 +10,14 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.NotificationManager;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.IntentSender;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Color;
@@ -31,6 +35,9 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
+import android.os.IBinder;
+import android.os.PowerManager;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -40,8 +47,10 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AlertDialog;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -58,7 +67,6 @@ import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.taxibooking.driver.BorakhApplication;
 import com.android.volley.AuthFailureError;
 import com.android.volley.NetworkResponse;
 import com.android.volley.Request;
@@ -66,11 +74,6 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.taxibooking.driver.Activity.MainActivity;
-import com.taxibooking.driver.Activity.Offline;
-import com.taxibooking.driver.Activity.ShowProfile;
-import com.taxibooking.driver.Activity.WaitingForApproval;
-import com.taxibooking.driver.Activity.WelcomeScreenActivity;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
@@ -105,10 +108,21 @@ import com.taxibooking.driver.Helper.URLHelper;
 import com.taxibooking.driver.Helper.User;
 import com.taxibooking.driver.R;
 import com.taxibooking.driver.Retrofit.ApiInterface;
+import com.taxibooking.driver.Retrofit.LatLongObject;
 import com.taxibooking.driver.Retrofit.RetrofitClient;
-import com.taxibooking.driver.Services.FloatingViewService;
+import com.taxibooking.driver.RightTransportDriverApplication;
 import com.taxibooking.driver.Utilities.Utilities;
+import com.taxibooking.driver.activity.MainActivity;
+import com.taxibooking.driver.activity.Offline;
+import com.taxibooking.driver.activity.ShowProfile;
+import com.taxibooking.driver.activity.WaitingForApproval;
+import com.taxibooking.driver.activity.WelcomeScreenActivity;
+import com.taxibooking.driver.services.FloatingViewService;
+import com.taxibooking.driver.services.LocationUpdatesService;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -119,6 +133,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -133,16 +148,23 @@ import retrofit2.Call;
 import retrofit2.Callback;
 
 import static android.content.Context.NOTIFICATION_SERVICE;
-import static com.taxibooking.driver.BorakhApplication.trimMessage;
+import static android.content.Context.POWER_SERVICE;
+import static com.taxibooking.driver.RightTransportDriverApplication.trimMessage;
 
 public class Map extends Fragment implements OnMapReadyCallback, LocationListener, GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener, View.OnClickListener, GoogleMap.OnCameraMoveListener {
+
+
+    long MillisecondTime, StartTime, TimeBuff, UpdateTime = 0L;
+    Handler handler;
+    int Seconds, Minutes, MilliSeconds;
 
     private static final int CODE_DRAW_OVER_OTHER_APP_PERMISSION = 2084;
     String CurrentStatus = " ";
     String PreviousStatus = " ";
     String request_id = " ";
     int method;
+    boolean isTimerRunnig = false;
     Activity activity;
     Context context;
     private String token;
@@ -215,6 +237,9 @@ public class Map extends Fragment implements OnMapReadyCallback, LocationListene
     TextView lblProviderName;
     ImageView paymentTypeImg;
 
+    TextView tvInfoKm;
+    TextView tvInfoTime;
+
     //content layer 05
     ImageView img05User;
     RatingBar rat05UserRating;
@@ -264,6 +289,7 @@ public class Map extends Fragment implements OnMapReadyCallback, LocationListene
     TextView destination;
     ConnectionHelper helper;
     LinearLayout destinationLayer;
+    View includedViewKmInfo;
     public static final int REQUEST_LOCATION = 1450;
     View view;
     boolean doubleBackToExitPressedOnce = false;
@@ -312,12 +338,20 @@ public class Map extends Fragment implements OnMapReadyCallback, LocationListene
         if (activity == null) {
             activity = getActivity();
         }
+
         if (context == null) {
             context = getContext();
         }
+        PowerManager powerManager = (PowerManager) requireActivity().getSystemService(POWER_SERVICE);
+        PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
+                "RightTransPortDriver::MyWakelockTag");
+        wakeLock.acquire(50 * 60 * 1000L /*10 minutes*/);
+
+
         findViewById(view);
         token = SharedHelper.getKey(context, "access_token");
         helper = new ConnectionHelper(context);
+
 
         //permission to access location
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -401,7 +435,10 @@ public class Map extends Fragment implements OnMapReadyCallback, LocationListene
                     mPlayer.stop();
                     mPlayer = null;
                 }
-                handleIncomingRequest("Reject", request_id);
+                mapClear();
+                lnrGoOffline.setVisibility(View.VISIBLE);
+                ll_01_contentLayer_accept_or_reject_now.setVisibility(View.GONE);
+                //handleIncomingRequest("Reject", request_id);
             }
         });
 
@@ -635,6 +672,9 @@ public class Map extends Fragment implements OnMapReadyCallback, LocationListene
         paymentTypeImg = (ImageView) view.findViewById(R.id.paymentTypeImg);
         errorLayout = (LinearLayout) view.findViewById(R.id.lnrErrorLayout);
         destinationLayer = (LinearLayout) view.findViewById(R.id.destinationLayer);
+        includedViewKmInfo = view.findViewById(R.id.includedViewKmInfo);
+        tvInfoKm = includedViewKmInfo.findViewById(R.id.tvInfoKm);
+        tvInfoTime = includedViewKmInfo.findViewById(R.id.tvInfoTime);
 
         //content layer 05
         img05User = (ImageView) view.findViewById(R.id.img05User);
@@ -706,20 +746,34 @@ public class Map extends Fragment implements OnMapReadyCallback, LocationListene
             parserTask = null;
         }
 
+        if (mMap != null) {
+            mMap.clear();
+        }
         if (!crt_lat.equalsIgnoreCase("") && !crt_lat.equalsIgnoreCase("")) {
             LatLng myLocation = new LatLng(Double.parseDouble(crt_lat), Double.parseDouble(crt_lng));
+
             CameraPosition cameraPosition = new CameraPosition.Builder().target(myLocation).zoom(14).build();
             mMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
         }
 
 
-        if (mMap != null) {
-            mMap.clear();
-        }
         srcLatitude = 0;
         srcLongitude = 0;
         destLatitude = 0;
         destLongitude = 0;
+
+        if (!TextUtils.isEmpty(crt_lat) && !TextUtils.isEmpty(crt_lng)) {
+            LatLng myLocation = new LatLng(Double.parseDouble(crt_lat), Double.parseDouble(crt_lng));
+
+            MarkerOptions markerOptions1 = new MarkerOptions()
+                    .position(myLocation)
+                    .anchor(0.5f, 0.5f).icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_driver_location));
+            currentMarker = mMap.addMarker(markerOptions1);
+            CameraPosition cameraPosition = new CameraPosition.Builder().target(myLocation).zoom(14).build();
+            mMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+        }
+
+
     }
 
     public void clearVisibility() {
@@ -838,9 +892,7 @@ public class Map extends Fragment implements OnMapReadyCallback, LocationListene
 
     private void setPickupLocationOnMap() {
         try {
-            if (mMap != null) {
-                mMap.clear();
-            }
+            mMap.clear();
 //            sourceLatLng = currentLatLng;
             sourceLatLng = new LatLng(Double.parseDouble(SharedHelper.getKey(context, "current_lat")), Double.parseDouble(SharedHelper.getKey(context, "current_lng")));
             destLatLng = new LatLng(srcLatitude, srcLongitude);
@@ -967,8 +1019,9 @@ public class Map extends Fragment implements OnMapReadyCallback, LocationListene
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(3000);
-        mLocationRequest.setFastestInterval(3000);
+        mLocationRequest.setInterval(20000);
+        mLocationRequest.setFastestInterval(10000);
+        mLocationRequest.setSmallestDisplacement(25);
         mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
         if (ContextCompat.checkSelfPermission(context,
                 Manifest.permission.ACCESS_FINE_LOCATION)
@@ -996,8 +1049,11 @@ public class Map extends Fragment implements OnMapReadyCallback, LocationListene
 
             MarkerOptions markerOptions1 = new MarkerOptions()
                     .position(new LatLng(location.getLatitude(), location.getLongitude()))
-                    .anchor(0.5f, 0.5f).icon(BitmapDescriptorFactory.fromResource(R.drawable.current_location));
+                    .anchor(0.5f, 0.5f).icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_driver_location));
             currentMarker = mMap.addMarker(markerOptions1);
+
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 16f));
+
 
             if (value == 0) {
                 myLat = String.valueOf(location.getLatitude());
@@ -1189,10 +1245,7 @@ public class Map extends Fragment implements OnMapReadyCallback, LocationListene
 
                     points.add(position);
                 }
-                if (mMap != null) {
-                    mMap.clear();
-                }
-
+                mMap.clear();
                 MarkerOptions markerOptions = new MarkerOptions().title("Source")
                         .position(sourceLatLng).icon(BitmapDescriptorFactory.fromResource(R.drawable.user_marker));
                 mMap.addMarker(markerOptions);
@@ -1266,12 +1319,26 @@ public class Map extends Fragment implements OnMapReadyCallback, LocationListene
                 }
             }
 
-
             if (helper.isConnectingToInternet()) {
+                Log.i("Checker", "Check if Internet");
 
                 if (SharedHelper.getKey(context, "is_track").equalsIgnoreCase("YES")) {
                     if (CurrentStatus.equalsIgnoreCase("DROPPED") || CurrentStatus.equalsIgnoreCase("COMPLETED")) {
-                        updateLiveTracking(crt_lat, crt_lng);
+
+                        requireActivity().bindService(new Intent(requireActivity(), LocationUpdatesService.class), mServiceConnection,
+                                Context.BIND_AUTO_CREATE);
+
+                        mService.requestLocationUpdates();
+                        mBound = true;
+                        //updateLiveTracking(crt_lat, crt_lng);
+                    } else {
+                        if (mBound) {
+                            // Unbind from the service. This signals to the service that this activity is no longer
+                            // in the foreground, and the service can respond by promoting itself to a foreground
+                            // service.
+                            requireActivity().unbindService(mServiceConnection);
+                            mBound = false;
+                        }
                     }
                 }
 
@@ -1374,18 +1441,19 @@ public class Map extends Fragment implements OnMapReadyCallback, LocationListene
                                                 if (ll_03_contentLayer_service_flow.getVisibility() == View.GONE) {
                                                     //ll_03_contentLayer_service_flow.startAnimation(slide_up);
                                                 }
+
                                                 ll_03_contentLayer_service_flow.setVisibility(View.VISIBLE);
                                                 btn_01_status.setText(context.getResources().getString(R.string.tap_when_arrived));
                                                 CurrentStatus = "ARRIVED";
                                                 sos.setVisibility(View.GONE);
                                                 if (srcLatitude == 0 && srcLongitude == 0 && destLatitude == 0 && destLongitude == 0) {
-                                                    mapClear();
+                                                    mMap.clear();
                                                     srcLatitude = Double.valueOf(statusResponse.optString("s_latitude"));
                                                     srcLongitude = Double.valueOf(statusResponse.optString("s_longitude"));
                                                     destLatitude = Double.valueOf(statusResponse.optString("d_latitude"));
                                                     destLongitude = Double.valueOf(statusResponse.optString("d_longitude"));
                                                     //noinspection deprecation
-                                                    //
+
                                                     setSourceLocationOnMap(currentLatLng);
                                                     setPickupLocationOnMap();
                                                 }
@@ -1393,7 +1461,9 @@ public class Map extends Fragment implements OnMapReadyCallback, LocationListene
                                                 img03Status2.setImageResource(R.drawable.pickup);
                                                 sos.setVisibility(View.GONE);
                                                 btn_cancel_ride.setVisibility(View.VISIBLE);
-                                                destinationLayer.setVisibility(View.VISIBLE);
+                                                destinationLayer.setVisibility(View.GONE);
+                                                imgNavigationToSource.setVisibility(View.VISIBLE);
+                                                includedViewKmInfo.setVisibility(View.VISIBLE);
                                                 String address = statusResponse.optString("s_address");
                                                 if (address != null && !address.equalsIgnoreCase("null") && address.length() > 0)
                                                     destination.setText(address);
@@ -1412,7 +1482,9 @@ public class Map extends Fragment implements OnMapReadyCallback, LocationListene
                                                 setSourceLocationOnMap(currentLatLng);
                                                 setDestinationLocationOnMap();
                                                 btn_cancel_ride.setVisibility(View.VISIBLE);
-                                                destinationLayer.setVisibility(View.VISIBLE);
+                                                destinationLayer.setVisibility(View.GONE);
+                                                imgNavigationToSource.setVisibility(View.VISIBLE);
+                                                includedViewKmInfo.setVisibility(View.VISIBLE);
                                                 String address = statusResponse.optString("d_address");
                                                 if (address != null && !address.equalsIgnoreCase("null") && address.length() > 0)
                                                     destination.setText(address);
@@ -1421,6 +1493,12 @@ public class Map extends Fragment implements OnMapReadyCallback, LocationListene
                                                             statusResponse.optString("d_longitude")));
                                                 topSrcDestTxtLbl.setText(context.getResources().getString(R.string.drop_at));
                                             } else if (statusResponse.optString("status").equals("PICKEDUP")) {
+
+                                                if (!isTimerRunnig) {
+                                                    startClock();
+                                                    isTimerRunnig = true;
+                                                }
+
                                                 setValuesTo_ll_03_contentLayer_service_flow(statusResponses);
                                                 ll_03_contentLayer_service_flow.setVisibility(View.VISIBLE);
                                                 btn_01_status.setText(context.getResources().getString(R.string.tap_when_dropped));
@@ -1428,7 +1506,9 @@ public class Map extends Fragment implements OnMapReadyCallback, LocationListene
                                                 img03Status1.setImageResource(R.drawable.arrived_select);
                                                 img03Status2.setImageResource(R.drawable.pickup_select);
                                                 CurrentStatus = "DROPPED";
-                                                destinationLayer.setVisibility(View.VISIBLE);
+                                                destinationLayer.setVisibility(View.GONE);
+                                                imgNavigationToSource.setVisibility(View.VISIBLE);
+                                                includedViewKmInfo.setVisibility(View.VISIBLE);
                                                 btn_cancel_ride.setVisibility(View.GONE);
                                                 String address = statusResponse.optString("d_address");
                                                 if (address != null && !address.equalsIgnoreCase("null") && address.length() > 0)
@@ -1437,10 +1517,12 @@ public class Map extends Fragment implements OnMapReadyCallback, LocationListene
                                                     destination.setText(getAddress(statusResponse.optString("d_latitude"), statusResponse.optString("d_longitude")));
                                                 }
                                                 topSrcDestTxtLbl.setText(context.getResources().getString(R.string.drop_at));
-                                                mapClear();
+                                                mMap.clear();
 
                                                 srcLatitude = Double.valueOf(statusResponse.optString("s_latitude"));
                                                 srcLongitude = Double.valueOf(statusResponse.optString("s_longitude"));
+                                                SharedHelper.putKey(context, "s_latitude", (float) srcLatitude);
+                                                SharedHelper.putKey(context, "s_longitude", (float) srcLongitude);
                                                 destLatitude = Double.valueOf(statusResponse.optString("d_latitude"));
                                                 destLongitude = Double.valueOf(statusResponse.optString("d_longitude"));
 
@@ -1458,6 +1540,8 @@ public class Map extends Fragment implements OnMapReadyCallback, LocationListene
                                                 btn_01_status.setText(context.getResources().getString(R.string.tap_when_paid));
                                                 sos.setVisibility(View.VISIBLE);
                                                 destinationLayer.setVisibility(View.GONE);
+                                                imgNavigationToSource.setVisibility(View.GONE);
+                                                includedViewKmInfo.setVisibility(View.GONE);
                                                 CurrentStatus = "COMPLETED";
                                             } else if (statusResponse.optString("status").equals("DROPPED") && statusResponse.optString("paid").equals("1")) {
                                                 setValuesTo_ll_05_contentLayer_feedback(statusResponses);
@@ -1468,6 +1552,8 @@ public class Map extends Fragment implements OnMapReadyCallback, LocationListene
                                                 btn_01_status.setText(context.getResources().getString(R.string.rate_user));
                                                 sos.setVisibility(View.VISIBLE);
                                                 destinationLayer.setVisibility(View.GONE);
+                                                imgNavigationToSource.setVisibility(View.GONE);
+                                                includedViewKmInfo.setVisibility(View.GONE);
                                                 CurrentStatus = "RATE";
 //                                                if (isMyServiceRunning(LocationTracking.class)) {
 //                                                    activity.stopService(service_intent);
@@ -1482,6 +1568,8 @@ public class Map extends Fragment implements OnMapReadyCallback, LocationListene
                                                 ll_05_contentLayer_feedback.setVisibility(View.VISIBLE);
                                                 sos.setVisibility(View.GONE);
                                                 destinationLayer.setVisibility(View.GONE);
+                                                imgNavigationToSource.setVisibility(View.GONE);
+                                                includedViewKmInfo.setVisibility(View.GONE);
                                                 btn_01_status.setText(context.getResources().getString(R.string.rate_user));
                                                 CurrentStatus = "RATE";
 //                                                if (isMyServiceRunning(LocationTracking.class)) {
@@ -1555,7 +1643,7 @@ public class Map extends Fragment implements OnMapReadyCallback, LocationListene
                                             if (ActivityCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                                                 return;
                                             }
-                                            mMap.clear();
+                                            mapClear();
                                         }
                                         if (mPlayer != null && mPlayer.isPlaying()) {
                                             mPlayer.stop();
@@ -1610,7 +1698,7 @@ public class Map extends Fragment implements OnMapReadyCallback, LocationListene
                         return headers;
                     }
                 };
-                BorakhApplication.getInstance().addToRequestQueue(jsonObjectRequest);
+                RightTransportDriverApplication.getInstance().addToRequestQueue(jsonObjectRequest);
             } else {
                 displayMessage(context.getResources().getString(R.string.oops_connect_your_internet));
             }
@@ -1657,7 +1745,7 @@ public class Map extends Fragment implements OnMapReadyCallback, LocationListene
                 mapClear();
                 clearVisibility();
                 if (mMap != null) {
-                    mMap.clear();
+                    mapClear();
                 }
                 if (mPlayer != null && mPlayer.isPlaying()) {
                     mPlayer.stop();
@@ -1780,12 +1868,12 @@ public class Map extends Fragment implements OnMapReadyCallback, LocationListene
         }
         try {
             txt04InvoiceId.setText(context.getResources().getString(R.string.invoice) + " " + bookingId);
-            txt04BasePrice.setText(SharedHelper.getKey(context, "currency") + "" + statusResponse.getJSONObject("payment").optString("fixed"));
-            txt04Distance.setText(SharedHelper.getKey(context, "currency") + "" + statusResponse.getJSONObject("payment").optString("distance"));
+            txt04BasePrice.setText(SharedHelper.getKey(context, "currency") + " " + statusResponse.getJSONObject("payment").optString("fixed"));
+            txt04Distance.setText(SharedHelper.getKey(context, "currency") + " " + statusResponse.getJSONObject("payment").optString("distance"));
             txt04Tax.setText(SharedHelper.getKey(context, "currency") + "" + statusResponse.getJSONObject("payment").optString("tax"));
-            txt04Total.setText(SharedHelper.getKey(context, "currency") + ""
+            txt04Total.setText(SharedHelper.getKey(context, "currency") + " "
                     + statusResponse.getJSONObject("payment").optString("total"));
-            txt04AmountToPaid.setText(SharedHelper.getKey(context, "currency") + ""
+            txt04AmountToPaid.setText(SharedHelper.getKey(context, "currency") + " "
                     + statusResponse.getJSONObject("payment").optString("payable"));
             txt04PaymentMode.setText(statusResponse.getString("payment_mode"));
             txt04Commision.setText(SharedHelper.getKey(context, "currency") + "" + statusResponse.getJSONObject("payment").optString("commision"));
@@ -1835,6 +1923,20 @@ public class Map extends Fragment implements OnMapReadyCallback, LocationListene
     }
 
     private void setValuesTo_ll_05_contentLayer_feedback(JSONArray status) {
+
+        try {
+            stopClock();
+            SharedHelper.putKey(context, "TaxDistance", 0);
+            imgNavigationToSource.setVisibility(View.GONE);
+            includedViewKmInfo.setVisibility(View.GONE);
+            mService.removeLocationUpdates();
+            requireActivity().unbindService(mServiceConnection);
+            mBound = false;
+            isTimerRunnig = false;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         rat05UserRating.setRating(1.0f);
         feedBackRating = "1";
         rat05UserRating.setOnRatingBarChangeListener(new RatingBar.OnRatingBarChangeListener() {
@@ -1900,7 +2002,7 @@ public class Map extends Fragment implements OnMapReadyCallback, LocationListene
                 public void onResponse(JSONObject response) {
                     customDialog.dismiss();
                     if (response != null) {
-                        if (response.has("service")&& response.optJSONObject("service").optString("status").equalsIgnoreCase("offline")) {
+                        if (response.has("service") && response.optJSONObject("service").optString("status").equalsIgnoreCase("offline")) {
                             goOffline();
                         } else {
                             displayMessage(context.getResources().getString(R.string.something_went_wrong));
@@ -1923,7 +2025,7 @@ public class Map extends Fragment implements OnMapReadyCallback, LocationListene
                     return headers;
                 }
             };
-            BorakhApplication.getInstance().addToRequestQueue(jsonObjectRequest);
+            RightTransportDriverApplication.getInstance().addToRequestQueue(jsonObjectRequest);
         } else {
             String url;
             JSONObject param = new JSONObject();
@@ -1967,9 +2069,7 @@ public class Map extends Fragment implements OnMapReadyCallback, LocationListene
                         CameraPosition cameraPosition = new CameraPosition.Builder().target(myLocation).zoom(14).build();
                         mMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
                         mapClear();
-                        if (mMap != null) {
-                            mMap.clear();
-                        }
+
                     }
                 }
             }, new Response.ErrorListener() {
@@ -1992,7 +2092,7 @@ public class Map extends Fragment implements OnMapReadyCallback, LocationListene
                     return headers;
                 }
             };
-            BorakhApplication.getInstance().addToRequestQueue(jsonObjectRequest);
+            RightTransportDriverApplication.getInstance().addToRequestQueue(jsonObjectRequest);
         }
     }
 
@@ -2076,7 +2176,7 @@ public class Map extends Fragment implements OnMapReadyCallback, LocationListene
             }
         };
 
-        BorakhApplication.getInstance().addToRequestQueue(jsonObjectRequest);
+        RightTransportDriverApplication.getInstance().addToRequestQueue(jsonObjectRequest);
     }
 
     private void handleIncomingRequest(final String status, String id) {
@@ -2121,7 +2221,7 @@ public class Map extends Fragment implements OnMapReadyCallback, LocationListene
                 return headers;
             }
         };
-        BorakhApplication.getInstance().addToRequestQueue(jsonObjectRequest);
+        RightTransportDriverApplication.getInstance().addToRequestQueue(jsonObjectRequest);
     }
 
 
@@ -2144,7 +2244,7 @@ public class Map extends Fragment implements OnMapReadyCallback, LocationListene
                     SharedHelper.putKey(context, "loggedIn", context.getResources().getString(R.string.False));
                     GoToBeginActivity();
                 } else if (response.statusCode == 422) {
-                    json = BorakhApplication.trimMessage(new String(response.data));
+                    json = RightTransportDriverApplication.trimMessage(new String(response.data));
                     if (json != "" && json != null) {
                         displayMessage(json);
                     } else {
@@ -2256,8 +2356,12 @@ public class Map extends Fragment implements OnMapReadyCallback, LocationListene
             super.onActivityResult(requestCode, resultCode, data);
         }
 
-    }
 
+        if (requestCode == 1234) {
+            initializeView();
+        }
+
+    }
 
     public String getAddress(String strLatitude, String strLongitude) {
         Geocoder geocoder;
@@ -2294,6 +2398,8 @@ public class Map extends Fragment implements OnMapReadyCallback, LocationListene
     public void onPause() {
 
         super.onPause();
+        LocalBroadcastManager.getInstance(requireActivity()).unregisterReceiver(myReceiver);
+
         if (customDialog != null) {
             if (customDialog.isShowing()) {
                 customDialog.dismiss();
@@ -2404,6 +2510,10 @@ public class Map extends Fragment implements OnMapReadyCallback, LocationListene
     @Override
     public void onResume() {
         super.onResume();
+        myReceiver = new MyReceiver();
+        LocalBroadcastManager.getInstance(requireActivity()).registerReceiver(myReceiver,
+                new IntentFilter(LocationUpdatesService.ACTION_BROADCAST));
+
         try {
             NotificationManager notificationManager = (NotificationManager) getActivity().getSystemService(NOTIFICATION_SERVICE);
             notificationManager.cancelAll();
@@ -2429,11 +2539,61 @@ public class Map extends Fragment implements OnMapReadyCallback, LocationListene
         mGoogleApiClient.connect();
     }
 
-    private void updateLiveTracking(String latitude, String longitude) {
+    // The BroadcastReceiver used to listen from broadcasts from the service.
+    private MyReceiver myReceiver;
+
+    // A reference to the service used to get location updates.
+    private LocationUpdatesService mService = null;
+
+    // Tracks the bound state of the service.
+    private boolean mBound = false;
+    // Monitors the state of the connection to the service.
+    private final ServiceConnection mServiceConnection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            LocationUpdatesService.LocalBinder binder = (LocationUpdatesService.LocalBinder) service;
+            mService = binder.getService();
+            mBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            mService = null;
+            mBound = false;
+        }
+    };
+
+    /**
+     * Receiver for broadcasts sent by {@link LocationUpdatesService}.
+     */
+    private class MyReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Location location = intent.getParcelableExtra(LocationUpdatesService.EXTRA_LOCATION);
+            String distance = intent.getStringExtra("DISTANCE");
+            updateKmInfo(distance);
+            if (location != null) {
+                updateLiveTracking(location.getLatitude() + "", location.getLongitude() + "", distance);
+
+            }
+        }
+    }
+
+    private void updateLiveTracking(String latitude, String longitude, String distance) {
+
+        Log.d("LatitudeLive", latitude);
+        Log.d("LongitudeLive", longitude);
+        Log.d("DistanceLive", distance);
+        LatLongObject latLongObject = new LatLongObject();
+        latLongObject.setLatitude(Double.parseDouble(latitude));
+        latLongObject.setLongitude(Double.parseDouble(longitude));
+        latLongObject.setDistance(distance);
+
         ApiInterface mApiInterface = RetrofitClient.getLiveTrackingClient().create(ApiInterface.class);
 
         Call<ResponseBody> call = mApiInterface.getLiveTracking("XMLHttpRequest", "Bearer " + token,
-                request_id, latitude, longitude);
+                request_id, latLongObject);
         call.enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> call, retrofit2.Response<ResponseBody> response) {
@@ -2458,8 +2618,155 @@ public class Map extends Fragment implements OnMapReadyCallback, LocationListene
      * Set and initialize the view elements.
      */
     private void initializeView() {
-        context.startService(new Intent(context, FloatingViewService.class));
-        activity.finish();
+
+        if (Build.VERSION.SDK_INT >= 23) {
+            if (!Settings.canDrawOverlays(requireActivity())) {
+                Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                        Uri.parse("package:" + requireActivity().getPackageName()));
+                startActivityForResult(intent, 1234);
+            }
+        } else {
+            context.startService(new Intent(context, FloatingViewService.class));
+            activity.finish();
+        }
+
+
+    }
+
+    public void updateKmInfo(String distance) {
+        tvInfoKm.setText(distance);
+    }
+
+
+    public void startClock() {
+
+        handler = new Handler();
+        StartTime = SystemClock.uptimeMillis();
+        handler.postDelayed(runnable, 0);
+
+    }
+
+    public void stopClock() {
+
+        TimeBuff += MillisecondTime;
+        handler.removeCallbacks(runnable);
+        MillisecondTime = 0L;
+        StartTime = 0L;
+        TimeBuff = 0L;
+        UpdateTime = 0L;
+        Seconds = 0;
+        Minutes = 0;
+        MilliSeconds = 0;
+
+    }
+
+    public Runnable runnable = new Runnable() {
+
+        public void run() {
+
+            MillisecondTime = SystemClock.uptimeMillis() - StartTime;
+
+            UpdateTime = TimeBuff + MillisecondTime;
+
+            Seconds = (int) (UpdateTime / 1000);
+
+            Minutes = Seconds / 60;
+
+            Seconds = Seconds % 60;
+
+            MilliSeconds = (int) (UpdateTime % 1000);
+
+            tvInfoTime.setText(String.format("%02d", Minutes) + ":"
+                    + String.format("%02d", Seconds));
+
+            handler.postDelayed(this, 0);
+        }
+
+    };
+
+    public String roundDistance(double distance) {
+        try {
+            DecimalFormat df = new DecimalFormat("#,##0.0");
+            return df.format(distance);
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+        }
+        return distance + "";
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onMessageEvent(Utilities.MessageEvent event) {
+        updateDestination();
+        Toast.makeText(context, "User has updated drop off location", Toast.LENGTH_LONG).show();
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        EventBus.getDefault().register(this);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        EventBus.getDefault().unregister(this);
+    }
+
+    public void updateDestination() {
+
+
+        if (helper.isConnectingToInternet()) {
+
+            String url = URLHelper.base + "api/provider/trip?latitude=" + crt_lat + "&longitude=" + crt_lng;
+            final JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+                @Override
+                public void onResponse(JSONObject response) {
+                    try {
+                        if (response.optJSONArray("requests") != null && response.optJSONArray("requests").length() > 0) {
+
+                            JSONObject statusResponse = response.optJSONArray("requests").getJSONObject(0).optJSONObject("request");
+                            String address = statusResponse.optString("d_address");
+
+                            if (address != null && !address.equalsIgnoreCase("null") && address.length() > 0)
+                                destination.setText(address);
+                            else {
+                                destination.setText(getAddress(statusResponse.optString("d_latitude"), statusResponse.optString("d_longitude")));
+                            }
+
+                            topSrcDestTxtLbl.setText(context.getResources().getString(R.string.drop_at));
+                            mMap.clear();
+
+                            srcLatitude = Double.valueOf(statusResponse.optString("s_latitude"));
+                            srcLongitude = Double.valueOf(statusResponse.optString("s_longitude"));
+                            destLatitude = Double.valueOf(statusResponse.optString("d_latitude"));
+                            destLongitude = Double.valueOf(statusResponse.optString("d_longitude"));
+
+                            setSourceLocationOnMap(currentLatLng);
+                            setDestinationLocationOnMap();
+                        }
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+
+
+            }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+
+                }
+            }) {
+                @Override
+                public java.util.Map<String, String> getHeaders() throws AuthFailureError {
+                    HashMap<String, String> headers = new HashMap<>();
+                    headers.put("X-Requested-With", "XMLHttpRequest");
+                    headers.put("Authorization", "Bearer " + token);
+                    return headers;
+                }
+            };
+            RightTransportDriverApplication.getInstance().addToRequestQueue(jsonObjectRequest);
+        }
     }
 
 }

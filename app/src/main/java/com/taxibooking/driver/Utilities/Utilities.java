@@ -23,7 +23,7 @@ import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
-import com.taxibooking.driver.Activity.MainActivity;
+import com.taxibooking.driver.activity.MainActivity;
 import com.taxibooking.driver.R;
 
 import java.util.List;
@@ -39,9 +39,9 @@ public class Utilities {
     private NotificationCompat.Builder notificationBuilder;
 
     public void print(String tag, String message) {
-        if(showLog){
-            Log.v(tag,message);
-        }
+        //if(showLog){
+            Log.d(tag,message);
+        //}
     }
 
     public static boolean isValidEmail(String email) {
@@ -231,4 +231,7 @@ public class Utilities {
             return R.mipmap.ic_launcher;
         }
     }
+
+
+    public static class MessageEvent { /* Additional fields if needed */ }
 }

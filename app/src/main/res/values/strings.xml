@@ -47,8 +47,11 @@
 
 
     <string name="app_name">&appName;</string>
+
+    <string name="chanel_id">123456789</string>
+
     <!--Google map-->
-    <string name="google_map_api" translatable="false">AIzaSyDT84TSfmxcfUd4ZsJP6tA528TT0EwNGLc</string>
+    <string name="google_map_api" translatable="false">AIzaSyBmTWJoAzY9zqT_G75HL04Nl5y-9Lt00cs</string>
     <string name="google_map__webservice_api" translatable="false">AIzaSyASkSNo9uuG9DlUgJ0EsuVWCTKu_dfkRac</string>
     <!--<string name="google_map_api" translatable="false">AIzaSyBmTWJoAzY9zqT_G75HL04Nl5y-9Lt00cs</string>-->
     <!-- Facebook ID and Account Kit ID  -->
@@ -294,5 +297,20 @@
     <string name="search_description">Be your own boss, set your own schedule. Get the latest driving features all in one spot.</string>
     <string name="bookmark_description">Make your earnings depends on the trip. Withdraw yours every week/monthly.</string>
     <string name="version">Version</string>
+
+
+    <string name="launch_activity"> Open App</string>
+    <string name="location_unknown">Location unknown</string>
+    <string name="location_updates_label">Location Updates</string>
+
+    <string name="permission_rationale">Location permission is needed for core functionality</string>
+    <string name="permission_denied_explanation">Permission was denied, but is needed for core
+        functionality.</string>
+    <string name="settings">Settings</string>
+    <string name="ok">OK</string>
+    <string name="request_location_updates">Request location updates</string>
+    <string name="remove_location_updates">Remove location updates</string>
+
+    <string name="location_updated">Right Transport: %1$s</string>
 
 </resources>

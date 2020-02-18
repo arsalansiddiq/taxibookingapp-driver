@@ -30,14 +30,14 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
-import com.taxibooking.driver.Activity.HistoryDetails;
-import com.taxibooking.driver.Activity.WelcomeScreenActivity;
+import com.taxibooking.driver.activity.HistoryDetails;
+import com.taxibooking.driver.activity.WelcomeScreenActivity;
 import com.taxibooking.driver.Helper.ConnectionHelper;
 import com.taxibooking.driver.Helper.CustomDialog;
 import com.taxibooking.driver.Helper.SharedHelper;
 import com.taxibooking.driver.Helper.URLHelper;
 import com.taxibooking.driver.R;
-import com.taxibooking.driver.BorakhApplication;
+import com.taxibooking.driver.RightTransportDriverApplication;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -51,7 +51,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-import static com.taxibooking.driver.BorakhApplication.trimMessage;
+import static com.taxibooking.driver.RightTransportDriverApplication.trimMessage;
 
 
 public class PastTrips extends Fragment {
@@ -222,7 +222,7 @@ public class PastTrips extends Fragment {
             }
         };
 
-        BorakhApplication.getInstance().addToRequestQueue(jsonArrayRequest);
+        RightTransportDriverApplication.getInstance().addToRequestQueue(jsonArrayRequest);
     }
 
 
@@ -253,12 +253,13 @@ public class PastTrips extends Fragment {
         @Override
         public void onBindViewHolder(PostAdapter.MyViewHolder holder, int position) {
             Glide.with(activity).load(jsonArray.optJSONObject(position).optString("static_map")).apply(new RequestOptions().placeholder(R.drawable.placeholder).error(R.drawable.placeholder)).into(holder.tripImg);
-            int displayAmount = 0;
+            double displayAmount = 0;
             if (jsonArray.optJSONObject(position).optJSONObject("payment") != null) {
-                int basePrice = jsonArray.optJSONObject(position).optJSONObject("payment").optInt("fixed");
-                int distancePrice = jsonArray.optJSONObject(position).optJSONObject("payment").optInt("distance");
-                int taxPrice = jsonArray.optJSONObject(position).optJSONObject("payment").optInt("tax");
-                displayAmount = basePrice + distancePrice + taxPrice;
+                double basePrice = jsonArray.optJSONObject(position).optJSONObject("payment").optDouble("fixed");
+                double distancePrice = jsonArray.optJSONObject(position).optJSONObject("payment").optDouble("distance");
+                double taxPrice = jsonArray.optJSONObject(position).optJSONObject("payment").optDouble("tax");
+                double surge = jsonArray.optJSONObject(position).optJSONObject("payment").optDouble("surge");
+                displayAmount = basePrice + distancePrice + taxPrice + surge;
 
                 holder.tripAmount.setText(SharedHelper.getKey(context, "currency") + "" + displayAmount);
             } else {

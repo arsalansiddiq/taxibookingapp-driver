@@ -572,6 +572,32 @@
                     android:textColor="@android:color/black"
                     android:textSize="@dimen/_13sdp" />
             </LinearLayout>
+            <LinearLayout
+                android:id="@+id/lnrSurge"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginTop="@dimen/_5sdp"
+                android:orientation="horizontal">
+
+                <com.taxibooking.driver.Utilities.MyBoldTextView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="start"
+                    android:text="Surge"
+                    android:textColor="@android:color/black"
+                    android:textSize="@dimen/_13sdp" />
+
+                <com.taxibooking.driver.Utilities.MyBoldTextView
+                    android:id="@+id/lblSurge"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="end"
+                    android:text="@string/sample_base_price"
+                    android:textColor="@android:color/black"
+                    android:textSize="@dimen/_13sdp" />
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"

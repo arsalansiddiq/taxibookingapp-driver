@@ -24,7 +24,7 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.taxibooking.driver.BorakhApplication;
+import com.taxibooking.driver.RightTransportDriverApplication;
 import com.android.volley.AuthFailureError;
 import com.android.volley.NetworkError;
 import com.android.volley.NetworkResponse;
@@ -34,7 +34,7 @@ import com.android.volley.Response;
 import com.android.volley.TimeoutError;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.taxibooking.driver.Activity.WelcomeScreenActivity;
+import com.taxibooking.driver.activity.WelcomeScreenActivity;
 import com.taxibooking.driver.Helper.ConnectionHelper;
 import com.taxibooking.driver.Helper.CustomDialog;
 import com.taxibooking.driver.Helper.SharedHelper;
@@ -212,7 +212,7 @@ public class EarningsFragment extends Fragment {
                             GoToBeginActivity();
                         }else if(response.statusCode == 422){
 
-                            json = BorakhApplication.trimMessage(new String(response.data));
+                            json = RightTransportDriverApplication.trimMessage(new String(response.data));
                             if(json !="" && json != null) {
                                 displayMessage(json);
                             }else{
@@ -250,7 +250,7 @@ public class EarningsFragment extends Fragment {
             }
         };
 
-        BorakhApplication.getInstance().addToRequestQueue(jsonObjectRequest);
+        RightTransportDriverApplication.getInstance().addToRequestQueue(jsonObjectRequest);
 
     }
 

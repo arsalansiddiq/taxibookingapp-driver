@@ -13,7 +13,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.taxibooking.driver.Activity.WelcomeScreenActivity;
+import com.taxibooking.driver.activity.WelcomeScreenActivity;
 import com.taxibooking.driver.Helper.ConnectionHelper;
 import com.taxibooking.driver.Helper.SharedHelper;
 import com.taxibooking.driver.R;

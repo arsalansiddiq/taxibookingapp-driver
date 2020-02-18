@@ -37,14 +37,14 @@ import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
-import com.taxibooking.driver.Activity.HistoryDetails;
-import com.taxibooking.driver.Activity.WelcomeScreenActivity;
+import com.taxibooking.driver.activity.HistoryDetails;
+import com.taxibooking.driver.activity.WelcomeScreenActivity;
 import com.taxibooking.driver.Helper.ConnectionHelper;
 import com.taxibooking.driver.Helper.CustomDialog;
 import com.taxibooking.driver.Helper.SharedHelper;
 import com.taxibooking.driver.Helper.URLHelper;
 import com.taxibooking.driver.R;
-import com.taxibooking.driver.BorakhApplication;
+import com.taxibooking.driver.RightTransportDriverApplication;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -188,7 +188,7 @@ public class OnGoingTrips extends Fragment {
                             GoToBeginActivity();
                         } else if (response.statusCode == 422) {
 
-                            json = BorakhApplication.trimMessage(new String(response.data));
+                            json = RightTransportDriverApplication.trimMessage(new String(response.data));
                             if (json != "" && json != null) {
                                 displayMessage(json);
                             } else {
@@ -227,7 +227,7 @@ public class OnGoingTrips extends Fragment {
             }
         };
 
-        BorakhApplication.getInstance().addToRequestQueue(jsonArrayRequest);
+        RightTransportDriverApplication.getInstance().addToRequestQueue(jsonArrayRequest);
     }
 
     public void GoToBeginActivity() {
@@ -423,7 +423,7 @@ public class OnGoingTrips extends Fragment {
                             GoToBeginActivity();
                         } else if (response.statusCode == 422) {
 
-                            json = BorakhApplication.trimMessage(new String(response.data));
+                            json = RightTransportDriverApplication.trimMessage(new String(response.data));
                             if (json != "" && json != null) {
                                 displayMessage(json);
                             } else {
@@ -459,7 +459,7 @@ public class OnGoingTrips extends Fragment {
             }
         };
 
-        BorakhApplication.getInstance().addToRequestQueue(jsonObjectRequest);
+        RightTransportDriverApplication.getInstance().addToRequestQueue(jsonObjectRequest);
     }
 
     private String getMonth(String date) throws ParseException {
